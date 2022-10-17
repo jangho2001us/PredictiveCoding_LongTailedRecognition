@@ -4,11 +4,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+
 def focal_loss(input_values, gamma):
     """Computes the focal loss"""
     p = torch.exp(-input_values)
     loss = (1 - p) ** gamma * input_values
     return loss.mean()
+
 
 class FocalLoss(nn.Module):
     def __init__(self, weight=None, gamma=0.):
@@ -20,8 +22,48 @@ class FocalLoss(nn.Module):
     def forward(self, input, target):
         return focal_loss(F.cross_entropy(input, target, reduction='none', weight=self.weight), self.gamma)
 
+
+class CBSMLoss(nn.Module):
+    def __init__(self, cls_num_list, beta=0.9999):
+        super(CBSMLoss, self).__init__()
+        assert beta >= 0
+        self.beta = 0.9999
+        self.effective_num = 1.0 - np.power(beta, cls_num_list)
+
+        self.weight = (1.0 - beta) / np.array(self.effective_num)
+        self.weight = self.weight / np.sum(self.weight) * len(cls_num_list)
+
+        # labe
+
+    def forward(self, input, target):
+        return focal_loss(F.cross_entropy(input, target, reduction='none', weight=self.weight), self.gamma)
+
+
+class CBFocalLoss(nn.Module):
+    def __init__(self, cls_num_list, weight=None, gamma=0.):
+        super(CBFocalLoss, self).__init__()
+        assert gamma >= 0
+        self.gamma = gamma
+        self.cls_num_list = cls_num_list
+
+        # calculate effective num
+        self.beta = 0.9999
+        self.effective_num = 1.0 - np.power(self.beta, cls_num_list)
+
+    def forward(self, input, target):
+        # one hot labels
+        self.labels_one_hot = F.one_hot(target, len(self.cls_num_list)).cuda()
+
+        # calculate weight
+        self.weight = (1.0 - self.beta) / np.array(self.effective_num)
+        self.weight = self.weight / np.sum(self.weight) * len(self.cls_num_list)
+        self.weight = torch.tensor(self.weight).float().cuda()
+
+        return focal_loss(F.cross_entropy(input, target, reduction='none', weight=self.weight), self.gamma)
+
+
 class LDAMLoss(nn.Module):
-    
+
     def __init__(self, cls_num_list, max_m=0.5, weight=None, s=30):
         super(LDAMLoss, self).__init__()
         m_list = 1.0 / np.sqrt(np.sqrt(cls_num_list))
@@ -35,11 +77,28 @@ class LDAMLoss(nn.Module):
     def forward(self, x, target):
         index = torch.zeros_like(x, dtype=torch.uint8)
         index.scatter_(1, target.data.view(-1, 1), 1)
-        
+
         index_float = index.type(torch.cuda.FloatTensor)
-        batch_m = torch.matmul(self.m_list[None, :], index_float.transpose(0,1))
+        batch_m = torch.matmul(self.m_list[None, :], index_float.transpose(0, 1))
         batch_m = batch_m.view((-1, 1))
         x_m = x - batch_m
-    
+
         output = torch.where(index, x_m, x)
-        return F.cross_entropy(self.s*output, target, weight=self.weight)
+
+        return F.cross_entropy(self.s * output, target, weight=self.weight)
+
+
+class BMSLoss(nn.Module):
+    ''' Balanced Meta Softmax Loss '''
+    def __init__(self, cls_num_list):
+        super(BMSLoss, self).__init__()
+        self.cls_num_list = cls_num_list
+
+    def forward(self, input, target):
+        spc = torch.tensor(self.cls_num_list).type_as(input)
+        spc = spc.unsqueeze(0).expand(input.shape[0], -1)
+
+        input = input + spc.log()
+        loss = F.cross_entropy(input, target, reduction='mean')
+
+        return loss
