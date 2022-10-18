@@ -1,6 +1,6 @@
 # Predictive Coding based Long-tailed Recognition in PyTorch
 
-Predictive coding networks ([paper](https://arxiv.org/abs/2106.13082), [code](https://github.com/RobertRosenbaum/Torch2PC)) based implementation of Prototypical Networks for Few Shot Learning ([paper](https://arxiv.org/abs/1703.05175), [code](https://github.com/orobix/Prototypical-Networks-for-Few-shot-Learning-PyTorch)) in PyTorch. 
+Predictive coding networks ([paper](https://arxiv.org/abs/2106.13082), [code](https://github.com/RobertRosenbaum/Torch2PC)) based implementation of Long-tailed Recognition in PyTorch. 
 
 ## Predictive Coding Algorithm
 
