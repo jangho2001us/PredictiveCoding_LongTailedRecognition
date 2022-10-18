@@ -24,7 +24,7 @@ The script takes the following command line options:
 
 - `root_model`: the root directory where tha trained model is stored, default to `'./checkpoint'`
 
-- `root_log`: the root directory where tha trained model is stored, default to `'./exp_lt'`
+- `root_log`: the root directory where tha training log is stored, default to `'./exp_lt'`
 
 - `dataset`: the dataset used for the experiment, default to `'mnist'`
 
@@ -32,11 +32,11 @@ The script takes the following command line options:
 
 - `loss_type`: the learning objective used for the experiment, default to `'CE'`
 
-- `imb_type`: the type of imbalance used for the experiment, default to `'exp'`
+- `imb_type`: the type of imbalance  used for the experiment, default to `'exp'`
 
 - `imb_factor`: the imbalanced degree used for the experiment, default to `'0.01'`
 
-- `learning_rate`: the imbalanced degree used for the experiment, default to `'0.1'`
+- `learning_rate`: the learning rate for the model, default to `'0.1'`
 
 Running the command without arguments will train the models with the default hyperparamters values (producing results shown above).
 
